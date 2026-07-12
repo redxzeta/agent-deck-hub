@@ -11,7 +11,7 @@ HUB_LDFLAGS=-ldflags "-X main.BuildFlavor=hub -X main.HubVersion=$(VERSION) -X m
 TAILWIND_VERSION=v4.2.2
 TAILWIND_BIN=$(HOME)/.local/bin/tailwindcss
 
-# Pin the patched project toolchain consistently across local builds and CI.
+# Keep local and CI builds on the version required by go.mod.
 export GOTOOLCHAIN=go1.25.12
 
 # Build the binary (requires compiled CSS via `make css`)
