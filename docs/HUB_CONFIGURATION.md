@@ -42,3 +42,12 @@ hyphen. Systemd units beginning with a hyphen are likewise rejected so neither
 targets nor units can be interpreted as command options. Validation errors
 identify the affected field but do not repeat target values. No remote command
 or subprocess starts while configuration is loading or validating.
+
+## Read-only CLI
+
+Hub builds expose `agent-deck-hub config`, `agent-deck-hub status`, and
+`agent-deck-hub services`. Add `--json` for stable versioned JSON. Exit code
+`0` means complete data, `1` means at least one host is unavailable or stale,
+and `2` means invalid usage, configuration, or initialization. Refreshes are
+bounded, do not overlap, and retain a last-good snapshot as stale when a later
+refresh fails. These commands do not restart services or read journals.

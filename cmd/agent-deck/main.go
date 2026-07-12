@@ -256,6 +256,9 @@ func main() {
 		// resolve consistently across all command paths in this process.
 		_ = os.Setenv("AGENTDECK_PROFILE", profile)
 	}
+	if isHubBuild() && len(args) > 0 && isHubCommand(args[0]) {
+		os.Exit(runHubCLI(context.Background(), args, os.Stdout, os.Stderr))
+	}
 
 	// Seed the tmux socket-isolation default from `[tmux].socket_name` once
 	// per process (v1.7.50+, issue #687). Package-level tmux probes
@@ -3177,6 +3180,20 @@ func drainStdin() {
 }
 
 func printHelp() {
+	if isHubBuild() {
+		fmt.Printf("Agent Deck Hub v%s (upstream-compatible Agent Deck v%s)\n", HubVersion, compatibleAgentDeckVersion())
+		fmt.Println("Read-only infrastructure status for Agent Deck Hub")
+		fmt.Println()
+		fmt.Println("Usage: agent-deck-hub <config|status|services> [--json]")
+		fmt.Println()
+		fmt.Println("Commands:")
+		fmt.Println("  config      Validate and display the Hub inventory")
+		fmt.Println("  status      Refresh and display host status")
+		fmt.Println("  services    Refresh and display service status")
+		fmt.Println("  version     Show Hub and compatible upstream versions")
+		fmt.Println("  help        Show this help")
+		return
+	}
 	fmt.Printf("Agent Deck v%s\n", Version)
 	fmt.Println("Terminal session manager for AI coding agents")
 	fmt.Println()
