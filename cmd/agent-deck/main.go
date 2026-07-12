@@ -43,14 +43,14 @@ var Version = "1.10.9" // overridden at build time via -ldflags "-X main.Version
 // upstream defaults preserves existing builds and release automation.
 var BuildFlavor = "upstream"
 var HubVersion = "dev"
-var UpstreamVersion = Version
+var UpstreamVersion = ""
 
 func isHubBuild() bool {
 	return BuildFlavor == "hub"
 }
 
 func compatibleAgentDeckVersion() string {
-	if isHubBuild() {
+	if isHubBuild() && UpstreamVersion != "" {
 		return UpstreamVersion
 	}
 	return Version
@@ -90,7 +90,7 @@ func initUpdateSettings() {
 // is behind. Offline — never touches the network. Conductor task #45.
 func writeVersionOutput(w io.Writer, currentVersion string) {
 	if isHubBuild() {
-		fmt.Fprintf(w, "Agent Deck Hub v%s (upstream-compatible Agent Deck v%s)\n", HubVersion, UpstreamVersion)
+		fmt.Fprintf(w, "Agent Deck Hub v%s (upstream-compatible Agent Deck v%s)\n", HubVersion, compatibleAgentDeckVersion())
 		return
 	}
 	fmt.Fprintf(w, "Agent Deck v%s", currentVersion)

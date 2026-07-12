@@ -15,6 +15,16 @@ import (
 	"github.com/asheshgoplani/agent-deck/internal/update"
 )
 
+var fetchLatestReleaseForRemote = update.FetchLatestRelease
+var fetchReleaseByTagForRemote = update.FetchReleaseByTag
+
+func fetchCompatibleRemoteRelease() (*update.Release, error) {
+	if isHubBuild() {
+		return fetchReleaseByTagForRemote(compatibleAgentDeckVersion())
+	}
+	return fetchLatestReleaseForRemote()
+}
+
 func handleRemote(profile string, args []string) {
 	if len(args) == 0 {
 		printRemoteUsage()
@@ -581,10 +591,13 @@ func installOnRemote(runner *session.SSHRunner, ctx context.Context) error {
 	}
 	fmt.Printf("  Platform: %s/%s\n", goos, goarch)
 
-	// Fetch latest release from GitHub
-	release, err := update.FetchLatestRelease()
+	// Hub builds fetch the exact release they declare compatible because they
+	// can intentionally lag upstream. Upstream builds retain their existing
+	// latest-release behavior.
+	targetVersion := compatibleAgentDeckVersion()
+	release, err := fetchCompatibleRemoteRelease()
 	if err != nil {
-		return fmt.Errorf("failed to fetch release info: %w", err)
+		return fmt.Errorf("failed to fetch release %s: %w", targetVersion, err)
 	}
 
 	// Download, verify SHA-256 against the release's checksums.txt, and extract.
@@ -600,7 +613,7 @@ func installOnRemote(runner *session.SSHRunner, ctx context.Context) error {
 	// before we report success (#1171: deploy + version-check used to target
 	// different files, producing a false "✓ Installed").
 	fmt.Printf("  Deploying to %s...\n", runner.Host)
-	if err := runner.InstallBinary(ctx, binaryData, compatibleAgentDeckVersion()); err != nil {
+	if err := runner.InstallBinary(ctx, binaryData, targetVersion); err != nil {
 		return fmt.Errorf("deploy failed: %w", err)
 	}
 

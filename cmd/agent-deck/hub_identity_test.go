@@ -2,8 +2,11 @@ package main
 
 import (
 	"bytes"
+	"errors"
 	"strings"
 	"testing"
+
+	"github.com/asheshgoplani/agent-deck/internal/update"
 )
 
 func withBuildIdentity(t *testing.T, flavor, hub, upstream string) {
@@ -44,5 +47,54 @@ func TestHubCompatibilityVersionUsesUpstreamVersion(t *testing.T) {
 	withBuildIdentity(t, "hub", "0.1.0", "1.10.9")
 	if got := compatibleAgentDeckVersion(); got != "1.10.9" {
 		t.Fatalf("compatibleAgentDeckVersion() = %q", got)
+	}
+}
+
+func TestHubCompatibilityVersionFallsBackToBakedInVersion(t *testing.T) {
+	oldVersion := Version
+	Version = "1.10.9"
+	t.Cleanup(func() { Version = oldVersion })
+	withBuildIdentity(t, "hub", "dev", "")
+
+	if got := compatibleAgentDeckVersion(); got != "1.10.9" {
+		t.Fatalf("compatibleAgentDeckVersion() = %q, want baked-in version", got)
+	}
+}
+
+func TestRemoteReleaseUsesHubCompatibleVersion(t *testing.T) {
+	withBuildIdentity(t, "hub", "0.1.0", "1.10.9")
+	oldFetch := fetchReleaseByTagForRemote
+	t.Cleanup(func() { fetchReleaseByTagForRemote = oldFetch })
+
+	wantErr := errors.New("stop after selection")
+	var requestedTag string
+	fetchReleaseByTagForRemote = func(tag string) (*update.Release, error) {
+		requestedTag = tag
+		return nil, wantErr
+	}
+
+	_, err := fetchCompatibleRemoteRelease()
+	if !errors.Is(err, wantErr) {
+		t.Fatalf("fetchReleaseForRemote() error = %v, want %v", err, wantErr)
+	}
+	if requestedTag != "1.10.9" {
+		t.Fatalf("requested release = %q, want compatible release 1.10.9", requestedTag)
+	}
+}
+
+func TestRemoteReleaseKeepsLatestSelectionForUpstreamBuild(t *testing.T) {
+	withBuildIdentity(t, "upstream", "dev", "1.10.9")
+	oldFetch := fetchLatestReleaseForRemote
+	t.Cleanup(func() { fetchLatestReleaseForRemote = oldFetch })
+
+	want := &update.Release{TagName: "v1.11.0"}
+	fetchLatestReleaseForRemote = func() (*update.Release, error) { return want, nil }
+
+	got, err := fetchCompatibleRemoteRelease()
+	if err != nil {
+		t.Fatalf("fetchCompatibleRemoteRelease() error = %v", err)
+	}
+	if got != want {
+		t.Fatalf("fetchCompatibleRemoteRelease() = %#v, want latest release", got)
 	}
 }
