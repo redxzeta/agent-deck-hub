@@ -81,12 +81,14 @@ func (c *Coordinator) refresh(ctx context.Context) []HostSnapshot {
 				host := c.Inventory.Hosts[index]
 				snapshot := c.refreshHost(ctx, host)
 				if snapshot.Error == "" {
-					c.mu.Lock()
-					if c.lastGood == nil {
-						c.lastGood = make(map[string]HostSnapshot)
+					if servicesComplete(snapshot.Services) {
+						c.mu.Lock()
+						if c.lastGood == nil {
+							c.lastGood = make(map[string]HostSnapshot)
+						}
+						c.lastGood[host.ID] = cloneHostSnapshot(snapshot)
+						c.mu.Unlock()
 					}
-					c.lastGood[host.ID] = cloneHostSnapshot(snapshot)
-					c.mu.Unlock()
 					result[index] = snapshot
 					continue
 				}
@@ -110,6 +112,15 @@ func (c *Coordinator) refresh(ctx context.Context) []HostSnapshot {
 	close(jobs)
 	wg.Wait()
 	return result
+}
+
+func servicesComplete(services []ServiceSnapshot) bool {
+	for _, service := range services {
+		if service.Error != "" {
+			return false
+		}
+	}
+	return true
 }
 
 func (c *Coordinator) refreshHost(ctx context.Context, host Host) HostSnapshot {

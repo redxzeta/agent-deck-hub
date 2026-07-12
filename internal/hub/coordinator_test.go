@@ -92,6 +92,30 @@ func TestCoordinatorServiceFailureDoesNotPoisonHostSnapshot(t *testing.T) {
 	}
 }
 
+func TestCoordinatorServiceFailureDoesNotReplaceCompleteCache(t *testing.T) {
+	probe := &coordinatorProbe{results: map[string]HostSnapshot{
+		"first": {Hostname: Available[string]{Value: "one", Available: true}}, "second": {},
+	}}
+	services := &coordinatorServices{}
+	coordinator := NewCoordinator(coordinatorInventory(), probe, services)
+	initial := coordinator.Refresh(context.Background())
+	if initial[0].Services[0].ActiveState.Value != "active" {
+		t.Fatalf("initial = %#v", initial[0])
+	}
+	services.fail = true
+	partial := coordinator.Refresh(context.Background())
+	if partial[0].Services[0].Error != "service status failed" || partial[0].Stale {
+		t.Fatalf("partial = %#v", partial[0])
+	}
+	probe.mu.Lock()
+	probe.results["first"] = HostSnapshot{Error: "host probe failed"}
+	probe.mu.Unlock()
+	stale := coordinator.Refresh(context.Background())
+	if !stale[0].Stale || stale[0].Services[0].Error != "" || stale[0].Services[0].ActiveState.Value != "active" {
+		t.Fatalf("complete cache was replaced: %#v", stale[0])
+	}
+}
+
 func TestCoordinatorFirstFailureIsUnavailableAndSanitized(t *testing.T) {
 	probe := &coordinatorProbe{results: map[string]HostSnapshot{"first": {Error: "host probe failed"}, "second": {}}}
 	coordinator := NewCoordinator(coordinatorInventory(), probe, &coordinatorServices{})
