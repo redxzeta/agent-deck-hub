@@ -11,7 +11,7 @@ Recorded for Task 00 on 2026-07-11.
 - Upstream-compatible base: `f70f19e04a44541792dfc871660bf80fd138a8ed`
 - Integration branch relative to `origin/main`: one commit ahead, zero behind
 - Go module: `github.com/asheshgoplani/agent-deck`
-- Required toolchain: Go 1.25.11
+- Required toolchain: Go 1.25.12
 
 The pre-existing integration commit adds `AGENTS.md` and
 `docs/internal/codebase-map.md`. It is retained as useful contributor context.
@@ -40,7 +40,7 @@ visible, use `tea.Cmd` for all network work, and preserve existing selection.
 ## Baseline validation
 
 The repository is designed for Linux CI with tmux and zoxide installed. A
-macOS managed-sandbox run downloaded Go 1.25.11 successfully when caches were
+macOS managed-sandbox run downloaded Go 1.25.12 successfully when caches were
 redirected to `/tmp`, but the full race suite was red for pre-existing
 environment/platform reasons: missing tmux, sandbox UNIX-socket restrictions,
 macOS sysinfo assumptions, and transcript-path fixtures resolving outside the
