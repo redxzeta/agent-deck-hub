@@ -129,8 +129,8 @@ func (c *Coordinator) refreshHost(ctx context.Context, host Host) HostSnapshot {
 	for index, service := range host.Services {
 		status, err := c.Services.Status(ctx, host, service)
 		if err != nil {
-			snapshot.Error = "service status failed"
-			return snapshot
+			snapshot.Services[index] = ServiceSnapshot{ServiceID: service.ID, Unit: service.Unit, Error: "service status failed"}
+			continue
 		}
 		snapshot.Services[index] = status
 	}

@@ -62,21 +62,33 @@ func TestCoordinatorPreservesOrderAndServiceOrder(t *testing.T) {
 
 func TestCoordinatorRetainsLastGoodAsStale(t *testing.T) {
 	probe := &coordinatorProbe{results: map[string]HostSnapshot{"first": {Hostname: Available[string]{Value: "one", Available: true}}, "second": {}}}
-	services := &coordinatorServices{}
-	coordinator := NewCoordinator(coordinatorInventory(), probe, services)
+	coordinator := NewCoordinator(coordinatorInventory(), probe, &coordinatorServices{})
 	first := coordinator.Refresh(context.Background())
 	if first[0].Error != "" {
 		t.Fatalf("initial refresh = %#v", first[0])
 	}
-	services.fail = true
+	probe.mu.Lock()
+	probe.results["first"] = HostSnapshot{Error: "host probe failed"}
+	probe.mu.Unlock()
 	second := coordinator.Refresh(context.Background())
-	if !second[0].Stale || second[0].Error != "service status failed" || second[0].Hostname.Value != "one" {
+	if !second[0].Stale || second[0].Error != "host probe failed" || second[0].Hostname.Value != "one" {
 		t.Fatalf("stale refresh = %#v", second[0])
 	}
 	second[0].Services[0].ServiceID = "mutated"
 	third := coordinator.Refresh(context.Background())
 	if third[0].Services[0].ServiceID != "api" {
 		t.Fatal("caller mutated cached snapshot")
+	}
+}
+
+func TestCoordinatorServiceFailureDoesNotPoisonHostSnapshot(t *testing.T) {
+	probe := &coordinatorProbe{results: map[string]HostSnapshot{
+		"first": {Hostname: Available[string]{Value: "one", Available: true}}, "second": {},
+	}}
+	coordinator := NewCoordinator(coordinatorInventory(), probe, &coordinatorServices{fail: true})
+	result := coordinator.Refresh(context.Background())
+	if result[0].Error != "" || result[0].Stale || result[0].Hostname.Value != "one" || result[0].Services[0].Error != "service status failed" {
+		t.Fatalf("service failure poisoned host: %#v", result[0])
 	}
 }
 

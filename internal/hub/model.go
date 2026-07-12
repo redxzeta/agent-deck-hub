@@ -64,6 +64,7 @@ type HostSnapshot struct {
 type ServiceSnapshot struct {
 	ServiceID   string
 	Unit        string
+	Error       string
 	ActiveState Available[string]
 	SubState    Available[string]
 }

@@ -75,7 +75,6 @@ func runHubCLI(ctx context.Context, args []string, stdout, stderr io.Writer) int
 		fmt.Fprintln(stderr, "Error: Hub refresh timed out")
 		return 2
 	}
-	partial := snapshotsPartial(snapshots)
 	if args[0] == "status" {
 		if jsonMode {
 			if code := writeHubJSON(stdout, hubStatusJSON{SchemaVersion: hubCLISchemaVersion, Hosts: snapshotHosts(snapshots)}, stderr); code != 0 {
@@ -83,6 +82,9 @@ func runHubCLI(ctx context.Context, args []string, stdout, stderr io.Writer) int
 			}
 		} else {
 			writeHubStatusText(stdout, snapshots)
+		}
+		if hostSnapshotsPartial(snapshots) {
+			return 1
 		}
 	} else {
 		if jsonMode {
@@ -92,9 +94,9 @@ func runHubCLI(ctx context.Context, args []string, stdout, stderr io.Writer) int
 		} else {
 			writeHubServicesText(stdout, snapshots)
 		}
-	}
-	if partial {
-		return 1
+		if serviceSnapshotsPartial(snapshots) {
+			return 1
+		}
 	}
 	return 0
 }
@@ -182,8 +184,16 @@ func snapshotServices(snapshots []hub.HostSnapshot) []snapshotServiceJSON {
 	var result []snapshotServiceJSON
 	for _, host := range snapshots {
 		for _, service := range host.Services {
-			result = append(result, snapshotServiceJSON{HostID: host.HostID, ID: service.ServiceID, Unit: service.Unit, Stale: host.Stale, Error: host.Error,
-				ActiveState: availableJSON[string]{service.ActiveState.Available, service.ActiveState.Value}, SubState: availableJSON[string]{service.SubState.Available, service.SubState.Value}})
+			errorMessage := service.Error
+			if errorMessage == "" {
+				errorMessage = host.Error
+			}
+			result = append(result, snapshotServiceJSON{
+				HostID: host.HostID, ID: service.ServiceID, Unit: service.Unit,
+				Stale: host.Stale, Error: errorMessage,
+				ActiveState: availableJSON[string]{service.ActiveState.Available, service.ActiveState.Value},
+				SubState:    availableJSON[string]{service.SubState.Available, service.SubState.Value},
+			})
 		}
 	}
 	if result == nil {
@@ -192,10 +202,24 @@ func snapshotServices(snapshots []hub.HostSnapshot) []snapshotServiceJSON {
 	return result
 }
 
-func snapshotsPartial(snapshots []hub.HostSnapshot) bool {
+func hostSnapshotsPartial(snapshots []hub.HostSnapshot) bool {
 	for _, snapshot := range snapshots {
 		if snapshot.Stale || snapshot.Error != "" {
 			return true
+		}
+	}
+	return false
+}
+
+func serviceSnapshotsPartial(snapshots []hub.HostSnapshot) bool {
+	if hostSnapshotsPartial(snapshots) {
+		return true
+	}
+	for _, host := range snapshots {
+		for _, service := range host.Services {
+			if service.Error != "" {
+				return true
+			}
 		}
 	}
 	return false
@@ -249,7 +273,9 @@ func writeHubServicesText(out io.Writer, snapshots []hub.HostSnapshot) {
 				sub = service.SubState.Value
 			}
 			fmt.Fprintf(out, "%s  %s  %s  %s/%s", host.HostID, service.ServiceID, service.Unit, active, sub)
-			if host.Stale {
+			if service.Error != "" {
+				fmt.Fprintf(out, "  %s", service.Error)
+			} else if host.Stale {
 				fmt.Fprint(out, "  stale")
 			} else if host.Error != "" {
 				fmt.Fprintf(out, "  %s", host.Error)

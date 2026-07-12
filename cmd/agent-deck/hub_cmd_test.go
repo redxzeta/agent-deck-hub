@@ -111,6 +111,26 @@ func TestHubServicesJSONPreservesServiceOrderAndAvailability(t *testing.T) {
 	}
 }
 
+func TestHubServiceFailureDoesNotFailHostStatus(t *testing.T) {
+	fixture := cliFixture()
+	fixture.snapshots = []hub.HostSnapshot{{
+		HostID: "first", Hostname: hub.Available[string]{Value: "one", Available: true},
+		Services: []hub.ServiceSnapshot{{ServiceID: "api", Unit: "api.service", Error: "service status failed"}},
+	}}
+	withHubCLIBackend(t, fixture, nil)
+	var statusOut, statusErr bytes.Buffer
+	if code := runHubCLI(context.Background(), []string{"status", "--json"}, &statusOut, &statusErr); code != 0 {
+		t.Fatalf("host status code=%d stderr=%q", code, statusErr.String())
+	}
+	var servicesOut, servicesErr bytes.Buffer
+	if code := runHubCLI(context.Background(), []string{"services", "--json"}, &servicesOut, &servicesErr); code != 1 {
+		t.Fatalf("services code=%d stderr=%q", code, servicesErr.String())
+	}
+	if !strings.Contains(servicesOut.String(), "service status failed") {
+		t.Fatalf("service error missing: %q", servicesOut.String())
+	}
+}
+
 func TestHubCLIUsageAndConfigFailuresExitTwoOnStderr(t *testing.T) {
 	for _, test := range []struct {
 		args []string
