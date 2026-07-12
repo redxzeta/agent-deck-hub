@@ -33,6 +33,7 @@ process itself.
 | Session domain | Instances, lifecycle, tools, hooks, groups, profiles, config, conductor, remote and worktree behavior | `internal/session` |
 | Hub domain | Strict XDG inventory, ordered host/service models, snapshot availability semantics | `internal/hub` |
 | Process transport | tmux creation, attachment, commands, capture, status and platform behavior | `internal/tmux` |
+| Hub process transport | Context-aware bounded local execution and fixed-template OpenSSH argv construction | `internal/hub/runner.go`, `internal/hub/ssh.go` |
 | Persistence | SQLite connection, schema, migrations, row operations, compatibility migration | `internal/statedb` and `internal/session/storage.go` |
 | Web surface | HTTP APIs, auth/bind safety, snapshots, assets, WebSocket/push behavior | `internal/web/server.go` |
 | Web mutations | Adapts HTTP mutations to the UI/session model; hydrates state explicitly in headless mode | `internal/ui/web_mutator.go` |
