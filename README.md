@@ -65,6 +65,13 @@ See [Troubleshooting](skills/agent-deck/references/troubleshooting.md#uninstalli
 
 </details>
 
+### Agent Deck Hub inventory
+
+The Hub build uses a separate, strictly validated
+[`hub.toml`](docs/HUB_CONFIGURATION.md) inventory under the XDG configuration
+directory. It does not store Hub inventory in Agent Deck's `config.toml` or
+SQLite state.
+
 ## Quick Start
 
 ```bash

@@ -31,6 +31,7 @@ process itself.
 | Executable and CLI | Profile selection, command routing, CLI parsing, TUI/web bootstrap | `cmd/agent-deck/main.go` |
 | Interactive UI | Bubble Tea state/update/view loop, navigation, dialogs, status polling | `internal/ui/home.go` |
 | Session domain | Instances, lifecycle, tools, hooks, groups, profiles, config, conductor, remote and worktree behavior | `internal/session` |
+| Hub domain | Strict XDG inventory, ordered host/service models, snapshot availability semantics | `internal/hub` |
 | Process transport | tmux creation, attachment, commands, capture, status and platform behavior | `internal/tmux` |
 | Persistence | SQLite connection, schema, migrations, row operations, compatibility migration | `internal/statedb` and `internal/session/storage.go` |
 | Web surface | HTTP APIs, auth/bind safety, snapshots, assets, WebSocket/push behavior | `internal/web/server.go` |
