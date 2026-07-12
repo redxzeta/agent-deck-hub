@@ -248,6 +248,9 @@ func main() {
 	// whose launchd PATH omits Homebrew's /opt/homebrew/bin). Must run before any
 	// tmux probe below. No-op when tmux is already on PATH.
 	ensureTmuxOnPath()
+	if isHubBuild() && hubInvocationUsesReadOnlyCLI(os.Args[1:]) {
+		os.Exit(runHubCLI(context.Background(), os.Args[1:], os.Stdout, os.Stderr))
+	}
 
 	// Extract global -p/--profile flag before subcommand dispatch
 	profile, args := extractProfileFlag(os.Args[1:])
@@ -3177,6 +3180,20 @@ func drainStdin() {
 }
 
 func printHelp() {
+	if isHubBuild() {
+		fmt.Printf("Agent Deck Hub v%s (upstream-compatible Agent Deck v%s)\n", HubVersion, compatibleAgentDeckVersion())
+		fmt.Println("Read-only infrastructure status for Agent Deck Hub")
+		fmt.Println()
+		fmt.Println("Usage: agent-deck-hub <config|status|services> [--json]")
+		fmt.Println()
+		fmt.Println("Commands:")
+		fmt.Println("  config      Validate and display the Hub inventory")
+		fmt.Println("  status      Refresh and display host status")
+		fmt.Println("  services    Refresh and display service status")
+		fmt.Println("  version     Show Hub and compatible upstream versions")
+		fmt.Println("  help        Show this help")
+		return
+	}
 	fmt.Printf("Agent Deck v%s\n", Version)
 	fmt.Println("Terminal session manager for AI coding agents")
 	fmt.Println()
