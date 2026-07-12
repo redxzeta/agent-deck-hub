@@ -46,15 +46,19 @@ type Available[T any] struct {
 }
 
 type HostSnapshot struct {
-	HostID      string
-	CollectedAt time.Time
-	Stale       bool
-	Error       string
-	Uptime      Available[time.Duration]
-	Load1       Available[float64]
-	MemoryUsed  Available[uint64]
-	MemoryTotal Available[uint64]
-	Services    []ServiceSnapshot
+	HostID        string
+	CollectedAt   time.Time
+	Stale         bool
+	Error         string
+	Hostname      Available[string]
+	Uptime        Available[time.Duration]
+	Load1         Available[float64]
+	MemoryUsed    Available[uint64]
+	MemoryTotal   Available[uint64]
+	RootDiskUsed  Available[uint64]
+	RootDiskTotal Available[uint64]
+	Latency       Available[time.Duration]
+	Services      []ServiceSnapshot
 }
 
 type ServiceSnapshot struct {
