@@ -9,6 +9,7 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"unicode/utf8"
 )
 
 const (
@@ -125,7 +126,7 @@ func parseLinuxProbe(data []byte, fallback time.Time) (HostSnapshot, error) {
 		problems = append(problems, "probe output exceeds parser limit")
 	}
 
-	if value, ok := validValue(values, invalid, "hostname"); ok && value != "" && !strings.ContainsAny(value, "\r\n\x00") {
+	if value, ok := validValue(values, invalid, "hostname"); ok && safeDisplayValue(value) {
 		snapshot.Hostname = Available[string]{Value: value, Available: true}
 	} else {
 		problems = append(problems, "invalid hostname")
@@ -175,6 +176,18 @@ func parseLinuxProbe(data []byte, fallback time.Time) (HostSnapshot, error) {
 		return snapshot, fmt.Errorf("parse host probe: %s", strings.Join(uniqueStrings(problems), "; "))
 	}
 	return snapshot, nil
+}
+
+func safeDisplayValue(value string) bool {
+	if value == "" || !utf8.ValidString(value) {
+		return false
+	}
+	for _, r := range value {
+		if r < 0x20 || r == 0x7f {
+			return false
+		}
+	}
+	return true
 }
 
 func validValue(values map[string]string, invalid map[string]bool, key string) (string, bool) {

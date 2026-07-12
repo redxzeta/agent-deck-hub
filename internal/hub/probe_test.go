@@ -40,6 +40,15 @@ func TestParseLinuxProbeRetainsIndependentFields(t *testing.T) {
 	}
 }
 
+func TestParseLinuxProbeRejectsHostnameControlBytes(t *testing.T) {
+	for _, hostname := range []string{"bad\x1b[31m", "bad\x7f", string([]byte{0xff})} {
+		snapshot, err := parseLinuxProbe([]byte("hostname="+hostname+"\nuptime_seconds=3\n"), time.Time{})
+		if err == nil || snapshot.Hostname.Available {
+			t.Fatalf("hostname %q was accepted: snapshot=%#v err=%v", hostname, snapshot, err)
+		}
+	}
+}
+
 type probeTransport struct {
 	mu        sync.Mutex
 	active    int
