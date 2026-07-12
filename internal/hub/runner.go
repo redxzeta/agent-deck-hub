@@ -12,6 +12,7 @@ import (
 const (
 	DefaultCommandTimeout = 15 * time.Second
 	DefaultOutputLimit    = 256 * 1024
+	DefaultWaitDelay      = 250 * time.Millisecond
 )
 
 var ErrOutputLimit = errors.New("command output limit exceeded")
@@ -81,6 +82,9 @@ func (r *ExecRunner) Run(ctx context.Context, command Command) (CommandResult, e
 		commandContext = exec.CommandContext
 	}
 	cmd := commandContext(runCtx, command.Name, command.Args...)
+	// A killed shell can leave descendants holding stdout/stderr pipes open.
+	// Bound how long Wait may spend draining those pipes after cancellation.
+	cmd.WaitDelay = DefaultWaitDelay
 	stdout := newBoundedBuffer(stdoutLimit)
 	stderr := newBoundedBuffer(stderrLimit)
 	cmd.Stdout = stdout

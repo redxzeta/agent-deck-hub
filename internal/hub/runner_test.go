@@ -35,9 +35,13 @@ func TestExecRunnerHonorsTimeoutAndCancellation(t *testing.T) {
 	runner := NewExecRunner()
 	command := helperCommand("wait", 128, 128)
 	command.Timeout = 20 * time.Millisecond
+	started := time.Now()
 	_, err := runner.Run(context.Background(), command)
 	if !errors.Is(err, context.DeadlineExceeded) {
 		t.Fatalf("timeout error = %v", err)
+	}
+	if elapsed := time.Since(started); elapsed > 750*time.Millisecond {
+		t.Fatalf("timeout returned after %s; descendant-held pipes were not bounded", elapsed)
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -66,7 +70,7 @@ func helperCommand(mode string, stdoutLimit, stderrLimit int) Command {
 	script := map[string]string{
 		"output": `printf stdout; printf stderr >&2`,
 		"large":  `printf xxxxxxxx; printf yyyyyyyy >&2`,
-		"wait":   `sleep 1`,
+		"wait":   `sleep 2 & wait`,
 	}[mode]
 	return Command{
 		Name:        "sh",
