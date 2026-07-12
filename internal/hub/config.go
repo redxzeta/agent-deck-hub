@@ -19,7 +19,7 @@ const (
 
 var (
 	idPattern   = regexp.MustCompile(`^[a-z0-9][a-z0-9_-]{0,63}$`)
-	unitPattern = regexp.MustCompile(`^[A-Za-z0-9_.@:-]+\.service$`)
+	unitPattern = regexp.MustCompile(`^[A-Za-z0-9_.@:][A-Za-z0-9_.@:-]*\.service$`)
 )
 
 // ConfigPath returns the dedicated Hub inventory path using the XDG config
@@ -136,6 +136,9 @@ func Validate(inventory *Inventory) error {
 func validateTarget(target string) error {
 	if target == "" {
 		return fmt.Errorf("must not be empty")
+	}
+	if strings.HasPrefix(target, "-") {
+		return fmt.Errorf("must not begin with a hyphen")
 	}
 	if len(target) > maxTargetBytes {
 		return fmt.Errorf("exceeds %d bytes", maxTargetBytes)

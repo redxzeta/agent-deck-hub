@@ -37,6 +37,8 @@ commands.
 Configuration is rejected as a whole when TOML is malformed, an unknown field
 is present, IDs are invalid or duplicated, a systemd unit is invalid, a scope
 or action is outside the closed set, actions repeat, or an SSH target is empty,
-over 255 bytes, invalid UTF-8, or contains a control character. Validation
-errors identify the affected field but do not repeat target values. No remote
-command or subprocess starts while configuration is loading or validating.
+over 255 bytes, invalid UTF-8, contains a control character, or begins with a
+hyphen. Systemd units beginning with a hyphen are likewise rejected so neither
+targets nor units can be interpreted as command options. Validation errors
+identify the affected field but do not repeat target values. No remote command
+or subprocess starts while configuration is loading or validating.
