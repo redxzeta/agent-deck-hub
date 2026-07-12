@@ -1,7 +1,7 @@
 name: CodeQL
 on:
-  push: { branches: [main] }
-  pull_request: { branches: [main] }
+  push: { branches: [main, agent-deck-hub-main] }
+  pull_request: { branches: [main, agent-deck-hub-main] }
   schedule: [{ cron: '0 6 * * 1' }]
 permissions:
   security-events: write

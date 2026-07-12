@@ -1,6 +1,6 @@
 name: PR diff-scope guard
 on:
-  pull_request: { branches: [main] }
+  pull_request: { branches: [main, agent-deck-hub-main] }
 permissions:
   contents: read
   pull-requests: read

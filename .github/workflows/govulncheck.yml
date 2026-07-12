@@ -1,7 +1,7 @@
 name: govulncheck
 on:
-  pull_request: { branches: [main] }
-  push: { branches: [main] }
+  pull_request: { branches: [main, agent-deck-hub-main] }
+  push: { branches: [main, agent-deck-hub-main] }
   schedule: [{ cron: '0 7 * * 1' }]
 permissions:
   contents: read

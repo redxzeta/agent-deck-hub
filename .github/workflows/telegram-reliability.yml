@@ -5,7 +5,7 @@ name: telegram-reliability
 
 on:
   pull_request:
-    branches: [ main ]
+    branches: [ main, agent-deck-hub-main ]
     paths:
       - 'internal/session/worker_scratch*.go'
       - 'internal/session/telegram_reliability.go'
@@ -16,7 +16,7 @@ on:
       - 'cmd/agent-deck/main.go'
       - '.github/workflows/telegram-reliability.yml'
   push:
-    branches: [ main ]
+    branches: [ main, agent-deck-hub-main ]
 
 jobs:
   test:
