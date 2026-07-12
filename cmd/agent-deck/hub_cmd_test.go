@@ -156,3 +156,16 @@ func TestHubCommandRecognitionDoesNotClaimUpstreamCommands(t *testing.T) {
 		}
 	}
 }
+
+func TestHubInvocationBoundaryRejectsEmptyAndUpstreamCommands(t *testing.T) {
+	for _, args := range [][]string{nil, {}, {"list"}, {"session", "start", "worker"}, {"config"}} {
+		if !hubInvocationUsesReadOnlyCLI(args) {
+			t.Fatalf("args %v escaped Hub CLI boundary", args)
+		}
+	}
+	for _, args := range [][]string{{"version"}, {"--version"}, {"-v"}, {"help"}, {"--help"}, {"-h"}} {
+		if hubInvocationUsesReadOnlyCLI(args) {
+			t.Fatalf("args %v did not reach read-only version/help", args)
+		}
+	}
+}

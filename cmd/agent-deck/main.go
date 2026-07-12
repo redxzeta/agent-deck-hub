@@ -256,7 +256,7 @@ func main() {
 		// resolve consistently across all command paths in this process.
 		_ = os.Setenv("AGENTDECK_PROFILE", profile)
 	}
-	if isHubBuild() && len(args) > 0 && isHubCommand(args[0]) {
+	if isHubBuild() && hubInvocationUsesReadOnlyCLI(args) {
 		os.Exit(runHubCLI(context.Background(), args, os.Stdout, os.Stderr))
 	}
 

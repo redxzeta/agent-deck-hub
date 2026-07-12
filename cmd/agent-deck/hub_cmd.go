@@ -41,6 +41,18 @@ func isHubCommand(command string) bool {
 	return command == "config" || command == "status" || command == "services"
 }
 
+func hubInvocationUsesReadOnlyCLI(args []string) bool {
+	if len(args) == 0 {
+		return true
+	}
+	switch args[0] {
+	case "version", "--version", "-v", "help", "--help", "-h":
+		return false
+	default:
+		return true
+	}
+}
+
 func runHubCLI(ctx context.Context, args []string, stdout, stderr io.Writer) int {
 	if len(args) == 0 || !isHubCommand(args[0]) {
 		fmt.Fprintln(stderr, "Usage: agent-deck-hub <config|status|services> [--json]")
