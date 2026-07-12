@@ -147,7 +147,7 @@ type snapshotServiceJSON struct {
 }
 type availableJSON[T any] struct {
 	Available bool `json:"available"`
-	Value     T    `json:"value,omitempty"`
+	Value     T    `json:"value"`
 }
 
 func configHosts(inventory *hub.Inventory) []configHostJSON {

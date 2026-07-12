@@ -74,6 +74,26 @@ func TestHubStatusPartialJSONUsesExitOneAndStdout(t *testing.T) {
 	}
 }
 
+func TestHubStatusJSONPreservesAvailableZeroValues(t *testing.T) {
+	fixture := cliFixture()
+	fixture.snapshots = []hub.HostSnapshot{{
+		HostID: "idle", Load1: hub.Available[float64]{Value: 0, Available: true},
+		Latency: hub.Available[time.Duration]{Value: 0, Available: true},
+	}}
+	withHubCLIBackend(t, fixture, nil)
+	var stdout, stderr bytes.Buffer
+	if code := runHubCLI(context.Background(), []string{"status", "--json"}, &stdout, &stderr); code != 0 {
+		t.Fatalf("code=%d stderr=%q", code, stderr.String())
+	}
+	var output hubStatusJSON
+	if err := json.Unmarshal(stdout.Bytes(), &output); err != nil {
+		t.Fatal(err)
+	}
+	if !output.Hosts[0].Load1.Available || output.Hosts[0].Load1.Value != 0 || !output.Hosts[0].LatencyMS.Available || output.Hosts[0].LatencyMS.Value != 0 {
+		t.Fatalf("zero values lost: %#v", output.Hosts[0])
+	}
+}
+
 func TestHubServicesJSONPreservesServiceOrderAndAvailability(t *testing.T) {
 	fixture := cliFixture()
 	fixture.snapshots = fixture.snapshots[:1]
