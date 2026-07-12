@@ -29,6 +29,7 @@ on:
   push:
     branches:
       - main
+      - agent-deck-hub-main
     paths:
       - '**.go'
       - 'go.mod'

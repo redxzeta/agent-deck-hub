@@ -15,7 +15,7 @@ Before the mainline fix, running the full session package locally on macOS
 failed ~66 tests:
 
 ```bash
-GOTOOLCHAIN=go1.25.11 go test ./internal/session/... -count=1   # ~66 failures
+GOTOOLCHAIN=go1.25.12 go test ./internal/session/... -count=1   # ~66 failures
 ```
 
 Most failures passed in isolation (`-run TestX$`) and only appeared in a
@@ -95,5 +95,5 @@ still the separate host-specific gate for session lifecycle behavior.
 ## Repro / verification
 
 ```bash
-GOTOOLCHAIN=go1.25.11 go test ./internal/session/... -count=1
+GOTOOLCHAIN=go1.25.12 go test ./internal/session/... -count=1
 ```
