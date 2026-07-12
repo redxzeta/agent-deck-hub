@@ -127,13 +127,10 @@ func systemdStatusCommand(service Service) string {
 }
 
 func systemdLogsCommand(service Service, lines int) string {
-	prefix := "journalctl"
 	if service.Scope == ScopeSystem {
-		prefix = "sudo -n journalctl"
-	} else {
-		prefix += " --user"
+		return fmt.Sprintf("sudo -n journalctl --no-pager -n %d -u %s", lines, service.Unit)
 	}
-	return fmt.Sprintf("%s --no-pager -n %d -u %s", prefix, lines, service.Unit)
+	return fmt.Sprintf("journalctl --user --no-pager -n %d --user-unit=%s", lines, service.Unit)
 }
 
 func systemdRestartCommand(service Service) string {

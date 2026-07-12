@@ -54,7 +54,7 @@ func TestSystemdLogsAndRestartScopeSelection(t *testing.T) {
 		wantRestart string
 	}{
 		{ScopeSystem, "sudo -n journalctl --no-pager -n 200 -u example-api@blue.service", "sudo -n systemctl restart example-api@blue.service"},
-		{ScopeUser, "journalctl --user --no-pager -n 200 -u example-api@blue.service", "systemctl --user restart example-api@blue.service"},
+		{ScopeUser, "journalctl --user --no-pager -n 200 --user-unit=example-api@blue.service", "systemctl --user restart example-api@blue.service"},
 	} {
 		transport := &systemdTransport{result: CommandResult{Stdout: []byte("bounded logs")}}
 		manager := NewSystemdManager(transport)
