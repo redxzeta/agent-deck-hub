@@ -248,6 +248,9 @@ func main() {
 	// whose launchd PATH omits Homebrew's /opt/homebrew/bin). Must run before any
 	// tmux probe below. No-op when tmux is already on PATH.
 	ensureTmuxOnPath()
+	if isHubBuild() && hubInvocationUsesReadOnlyCLI(os.Args[1:]) {
+		os.Exit(runHubCLI(context.Background(), os.Args[1:], os.Stdout, os.Stderr))
+	}
 
 	// Extract global -p/--profile flag before subcommand dispatch
 	profile, args := extractProfileFlag(os.Args[1:])
@@ -255,9 +258,6 @@ func main() {
 		// Propagate explicit profile selection so config lookups (e.g., per-profile Claude config)
 		// resolve consistently across all command paths in this process.
 		_ = os.Setenv("AGENTDECK_PROFILE", profile)
-	}
-	if isHubBuild() && hubInvocationUsesReadOnlyCLI(args) {
-		os.Exit(runHubCLI(context.Background(), args, os.Stdout, os.Stderr))
 	}
 
 	// Seed the tmux socket-isolation default from `[tmux].socket_name` once

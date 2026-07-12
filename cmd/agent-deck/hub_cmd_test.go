@@ -135,7 +135,7 @@ func TestHubCLIUsageAndConfigFailuresExitTwoOnStderr(t *testing.T) {
 	for _, test := range []struct {
 		args []string
 		err  error
-	}{{args: []string{"status", "--bad"}}, {args: []string{"config"}, err: errors.New("invalid inventory")}} {
+	}{{args: []string{"status", "--bad"}}, {args: []string{"services", "-p", "prod"}}, {args: []string{"config"}, err: errors.New("invalid inventory")}} {
 		withHubCLIBackend(t, cliFixture(), test.err)
 		var stdout, stderr bytes.Buffer
 		if code := runHubCLI(context.Background(), test.args, &stdout, &stderr); code != 2 || stdout.Len() != 0 || stderr.Len() == 0 {
