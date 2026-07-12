@@ -52,10 +52,17 @@ import (
 
 // Version is set by main.go for update checking
 var Version = "0.0.0"
+var updateChecksEnabled = true
 
 // SetVersion sets the current version for update checking
 func SetVersion(v string) {
 	Version = v
+}
+
+// SetUpdateChecksEnabled disables all local update network work and nudges for
+// build flavors whose release channel is not upstream Agent Deck.
+func SetUpdateChecksEnabled(enabled bool) {
+	updateChecksEnabled = enabled
 }
 
 // CreatingSession is a lightweight placeholder shown in the UI while
@@ -2444,6 +2451,9 @@ func (h *Home) Init() tea.Cmd {
 
 // checkForUpdate checks for updates asynchronously
 func (h *Home) checkForUpdate() tea.Cmd {
+	if !updateChecksEnabled {
+		return nil
+	}
 	return func() tea.Msg {
 		info, _ := update.CheckForUpdate(Version, false)
 		return updateCheckMsg{info: info}

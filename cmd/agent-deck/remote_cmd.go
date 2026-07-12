@@ -147,17 +147,17 @@ func handleRemoteAdd(args []string) {
 	remoteVersion, found := runner.CheckBinary(ctx)
 	if found {
 		fmt.Printf("  Remote agent-deck: v%s\n", remoteVersion)
-		if update.CompareVersions(remoteVersion, Version) < 0 {
-			fmt.Printf("  Note: remote is older than local (v%s). Run 'agent-deck remote update %s' to update.\n", Version, name)
+		if update.CompareVersions(remoteVersion, compatibleAgentDeckVersion()) < 0 {
+			fmt.Printf("  Note: remote is older than local (v%s). Run 'agent-deck remote update %s' to update.\n", compatibleAgentDeckVersion(), name)
 		}
 	} else {
 		fmt.Printf("  agent-deck not found on remote at '%s'\n", rc.GetAgentDeckPath())
-		fmt.Printf("  Installing v%s...\n", Version)
+		fmt.Printf("  Installing v%s...\n", compatibleAgentDeckVersion())
 		if err := installOnRemote(runner, ctx); err != nil {
 			fmt.Printf("  Warning: auto-install failed: %v\n", err)
 			fmt.Printf("  You can install manually or run: agent-deck remote update %s\n", name)
 		} else {
-			fmt.Printf("  ✓ Installed agent-deck v%s on remote '%s'\n", Version, name)
+			fmt.Printf("  ✓ Installed agent-deck v%s on remote '%s'\n", compatibleAgentDeckVersion(), name)
 		}
 	}
 }
@@ -490,19 +490,19 @@ func handleRemoteUpdate(args []string) {
 		remoteVersion, found := runner.CheckBinary(ctx)
 		if found {
 			fmt.Printf("  Current version: v%s\n", remoteVersion)
-			if update.CompareVersions(remoteVersion, Version) >= 0 {
-				fmt.Printf("  ✓ Up to date (local: v%s)\n", Version)
+			if update.CompareVersions(remoteVersion, compatibleAgentDeckVersion()) >= 0 {
+				fmt.Printf("  ✓ Up to date (local: v%s)\n", compatibleAgentDeckVersion())
 				continue
 			}
-			fmt.Printf("  Updating to v%s...\n", Version)
+			fmt.Printf("  Updating to v%s...\n", compatibleAgentDeckVersion())
 		} else {
-			fmt.Printf("  agent-deck not found, installing v%s...\n", Version)
+			fmt.Printf("  agent-deck not found, installing v%s...\n", compatibleAgentDeckVersion())
 		}
 
 		if err := installOnRemote(runner, ctx); err != nil {
 			fmt.Printf("  ✗ Failed: %v\n", err)
 		} else {
-			fmt.Printf("  ✓ Installed v%s\n", Version)
+			fmt.Printf("  ✓ Installed v%s\n", compatibleAgentDeckVersion())
 		}
 	}
 
@@ -600,7 +600,7 @@ func installOnRemote(runner *session.SSHRunner, ctx context.Context) error {
 	// before we report success (#1171: deploy + version-check used to target
 	// different files, producing a false "✓ Installed").
 	fmt.Printf("  Deploying to %s...\n", runner.Host)
-	if err := runner.InstallBinary(ctx, binaryData, Version); err != nil {
+	if err := runner.InstallBinary(ctx, binaryData, compatibleAgentDeckVersion()); err != nil {
 		return fmt.Errorf("deploy failed: %w", err)
 	}
 
