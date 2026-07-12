@@ -39,6 +39,30 @@ import (
 
 var Version = "1.10.9" // overridden at build time via -ldflags "-X main.Version=..."
 
+// Build identity is overridden only by the build-hub target. Keeping the
+// upstream defaults preserves existing builds and release automation.
+var BuildFlavor = "upstream"
+var HubVersion = "dev"
+var UpstreamVersion = ""
+
+func isHubBuild() bool {
+	return BuildFlavor == "hub"
+}
+
+func compatibleAgentDeckVersion() string {
+	if isHubBuild() && UpstreamVersion != "" {
+		return UpstreamVersion
+	}
+	return Version
+}
+
+func localSelfUpdateError() error {
+	if !isHubBuild() {
+		return nil
+	}
+	return fmt.Errorf("local self-update is disabled for agent-deck-hub; install a Hub release instead")
+}
+
 // Table column widths for list command output
 const (
 	tableColTitle     = 20
@@ -65,6 +89,10 @@ func initUpdateSettings() {
 // ` (update available: vA.B.C)` when the on-disk cache says the user
 // is behind. Offline — never touches the network. Conductor task #45.
 func writeVersionOutput(w io.Writer, currentVersion string) {
+	if isHubBuild() {
+		fmt.Fprintf(w, "Agent Deck Hub v%s (upstream-compatible Agent Deck v%s)\n", HubVersion, compatibleAgentDeckVersion())
+		return
+	}
 	fmt.Fprintf(w, "Agent Deck v%s", currentVersion)
 	info, err := update.CachedUpdateInfo(currentVersion)
 	if err == nil && info != nil && info.Available {
@@ -76,6 +104,9 @@ func writeVersionOutput(w io.Writer, currentVersion string) {
 // printUpdateNotice checks for updates and prints a one-liner if available
 // Uses cache to avoid API calls - only prints if update was already detected
 func printUpdateNotice() {
+	if isHubBuild() {
+		return
+	}
 	settings := session.GetUpdateSettings()
 	if !settings.GetCheckEnabled() || !settings.GetNotifyInCLI() {
 		return
@@ -93,6 +124,9 @@ func printUpdateNotice() {
 
 // promptForUpdate checks for updates and prompts user if auto_update is enabled
 func promptForUpdate() bool {
+	if isHubBuild() {
+		return false
+	}
 	settings := session.GetUpdateSettings()
 	if !settings.GetCheckEnabled() {
 		return false
@@ -417,7 +451,8 @@ func main() {
 	}
 
 	// Set version for UI update checking
-	ui.SetVersion(Version)
+	ui.SetVersion(compatibleAgentDeckVersion())
+	ui.SetUpdateChecksEnabled(!isHubBuild())
 
 	// Initialize theme from config (resolves "system" to actual dark/light)
 	theme := session.ResolveTheme()
@@ -2748,6 +2783,10 @@ func handleProfileSetDefault(out *CLIOutput, name string) {
 
 // handleUpdate checks for and performs updates
 func handleUpdate(args []string) {
+	if err := localSelfUpdateError(); err != nil {
+		fmt.Fprintln(os.Stderr, "Error:", err)
+		os.Exit(2)
+	}
 	fs := flag.NewFlagSet("update", flag.ExitOnError)
 	checkOnly := fs.Bool("check", false, "Only check for updates, don't install")
 	targetVersion := fs.String("version", "", "Install a specific released version (e.g. 1.7.3); may be a downgrade")

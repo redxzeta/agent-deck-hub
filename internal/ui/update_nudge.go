@@ -16,6 +16,9 @@ import (
 //  3. The user dismissed it via shift+U earlier in this session.
 //  4. AGENTDECK_SKIP_UPDATE_CHECK is set (ShouldNudge checks this).
 func (h *Home) shouldRenderUpdateNudge() bool {
+	if !updateChecksEnabled {
+		return false
+	}
 	if h.updateNudgeDismissed {
 		return false
 	}

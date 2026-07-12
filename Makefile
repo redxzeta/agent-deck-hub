@@ -1,20 +1,26 @@
-.PHONY: build run install clean dev release-local test test-perf bench fmt lint ci css tools css-verify test-web test-web-unit test-web-e2e test-web-install
+.PHONY: build build-hub run install install-hub-user clean dev release-local test test-perf bench fmt lint ci css tools css-verify test-web test-web-unit test-web-e2e test-web-install
 
 BINARY_NAME=agent-deck
 BUILD_DIR=./build
 VERSION=$(shell git describe --tags --always --dirty 2>/dev/null | sed 's/^v//' || echo "dev")
 LDFLAGS=-ldflags "-X main.Version=$(VERSION)"
+UPSTREAM_VERSION=$(shell awk -F'"' '/var Version =/ {print $$2; exit}' cmd/agent-deck/main.go)
+HUB_LDFLAGS=-ldflags "-X main.BuildFlavor=hub -X main.HubVersion=$(VERSION) -X main.UpstreamVersion=$(UPSTREAM_VERSION)"
 
 # Tailwind v4 standalone CLI (PERF-01)
 TAILWIND_VERSION=v4.2.2
 TAILWIND_BIN=$(HOME)/.local/bin/tailwindcss
 
-# Pin Go toolchain to 1.24.0 to prevent Go 1.25+ runtime regression on macOS
+# Pin the patched project toolchain consistently across local builds and CI.
 export GOTOOLCHAIN=go1.25.12
 
 # Build the binary (requires compiled CSS via `make css`)
 build: css
 	go build $(LDFLAGS) -o $(BUILD_DIR)/$(BINARY_NAME) ./cmd/agent-deck
+
+# Build the fork without changing the upstream binary target.
+build-hub: css
+	go build $(HUB_LDFLAGS) -o $(BUILD_DIR)/agent-deck-hub ./cmd/agent-deck
 
 # Download the pinned Tailwind v4 standalone CLI binary if missing or wrong version
 tools:
@@ -115,6 +121,14 @@ install-user: build
 	@echo "✅ Installed to $(HOME)/.local/bin/$(BINARY_NAME)"
 	@echo "Make sure $(HOME)/.local/bin is in your PATH"
 	@echo "Run 'agent-deck' to start"
+
+# Install Hub beside Agent Deck without sudo or path replacement.
+install-hub-user: build-hub
+	mkdir -p $(HOME)/.local/bin
+	rm -f $(HOME)/.local/bin/agent-deck-hub
+	cp $(BUILD_DIR)/agent-deck-hub $(HOME)/.local/bin/agent-deck-hub
+	@if [ "$$(uname)" = "Darwin" ]; then codesign --force --sign - $(HOME)/.local/bin/agent-deck-hub; fi
+	@echo "✅ Installed to $(HOME)/.local/bin/agent-deck-hub"
 
 # Uninstall from /usr/local/bin
 uninstall:
